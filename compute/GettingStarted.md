@@ -37,7 +37,7 @@ Set a static IP on the **CARLA laptop (Windows)**:
     *   **IP Address:** `192.168.43.249`
     *   **Subnet Mask:** `255.255.255.0`
     *   **Default Gateway:** (leave empty)
-
+    *   
 ---  
 
 ## 🚗 Step 3— Run CARLA
@@ -47,6 +47,8 @@ And run the simulation -
 ```powershell
 CarlaUE4.exe
 ```
+Connect both the laptops via Ethernet Cable
+
 ---
 
 ## 🐳 Step 4 — Start CarMate Stack
