@@ -41,8 +41,9 @@ Set a static IP on the **CARLA laptop (Windows)**:
 ---  
 
 ## 🚗 Step 3— Run CARLA
+On the **CARLA machine** (Windows) download Carla 0.9.14 here -> https://tiny.carla.org/carla-0-9-14-windows
 
-On the **CARLA machine** (Windows), execute the simulator:
+And run the simulation - 
 ```powershell
 CarlaUE4.exe
 ```
