@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+    
+  sdv_runtime:
+    image: ghcr.io/eclipse-autowrx/sdv-runtime:latest
+    container_name: sdv_runtime_COMPOSE
+    network_mode: host
+    environment:
+      RUNTIME_NAME: CarMate
+    restart: unless-stopped
+
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    container_name: mqtt_COMPOSE
+    network_mode: host
+    depends_on:
+      - sdv_runtime
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+    restart: unless-stopped
+
+  zenoh:
+    image: eclipse/zenoh
+    container_name: zenoh_COMPOSE
+    network_mode: host
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+
+  mqtt_provider:
+    build:
+      context: ./MQTT_KUIKSA_Provider
+    container_name: mqtt_provider_COMPOSE
+    network_mode: host
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+
+  carla_provider:
+    image: ghcr.io/raihhann/carla_mqtt_provider:latest
+    container_name: carla_provider_COMPOSE
+    network_mode: host
+    depends_on:
+      - mqtt
+    command: python /home/carla_provider.py
+    restart: unless-stopped
+    
+  vehicle_data_accessor:
+    build:
+      context: ./Vehicle_data_accessor
+    container_name: vehicle_data_accessor_COMPOSE
+    network_mode: host
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+    
+  carmate_agents:
+    build:
+      context: ./carmate_agents
+    container_name: carmate_agents_COMPOSE
+    network_mode: host
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+    
+  carmate_io:
+    build:
+      context: ./car_mate_io
+    container_name: carmate_io_COMPOSE
+    network_mode: host
+    depends_on:
+      - zenoh
+    restart: unless-stopped
+
+

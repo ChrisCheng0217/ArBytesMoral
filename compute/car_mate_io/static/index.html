@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CarMate Assistant</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: radial-gradient(circle at top, #1b1f2a, #0b0f14);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            width: 420px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #9ad1ff;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-top: 10px;
+            border-radius: 12px;
+            border: none;
+            padding: 10px;
+            resize: none;
+            background: rgba(255,255,255,0.08);
+            color: white;
+            outline: none;
+        }
+
+        .btnRow {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            margin: 5px;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        #btnStart {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: white;
+        }
+
+        #btnStop {
+            background: linear-gradient(135deg, #ff4d4d, #c20000);
+            color: white;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .label {
+            margin-top: 15px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>🚗 CarMate AI</h2>
+
+    <div class="status" id="sttStatus">Idle</div>
+
+    <div class="btnRow">
+        <button id="btnStart">🎙️ Speak</button>
+        <button id="btnStop" disabled>⛔ Stop</button>
+    </div>
+
+    <div class="label">You said</div>
+    <textarea id="sttResult" readonly></textarea>
+
+    <div class="label">AI Response</div>
+    <textarea id="aiResult" readonly></textarea>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/audiobuffer-to-wav@1.0.0/index.min.js"></script>
+
+<script>
+let audioContext;
+let stream;
+let input;
+let processor;
+let audioChunks = [];
+
+let currentAudio = null; // 🔊 track current playing audio
+
+const btnStart = document.getElementById("btnStart");
+const btnStop = document.getElementById("btnStop");
+
+const sttStatus = document.getElementById("sttStatus");
+const sttResult = document.getElementById("sttResult");
+const aiResult = document.getElementById("aiResult");
+
+btnStart.onclick = async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        audioContext = new AudioContext();
+        input = audioContext.createMediaStreamSource(stream);
+        processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+        audioChunks = [];
+
+        processor.onaudioprocess = (e) => {
+            audioChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+        };
+
+        input.connect(processor);
+        processor.connect(audioContext.destination);
+
+        sttStatus.innerText = "🎤 Listening...";
+
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+
+    } catch (err) {
+        sttStatus.innerText = "Mic error";
+        console.error(err);
+    }
+};
+
+btnStop.onclick = async () => {
+
+    processor.disconnect();
+    input.disconnect();
+    stream.getTracks().forEach(t => t.stop());
+
+    let length = audioChunks.reduce((a,b)=>a+b.length,0);
+    let result = new Float32Array(length);
+
+    let offset = 0;
+    for (let chunk of audioChunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    const buffer = audioContext.createBuffer(1, result.length, audioContext.sampleRate);
+    buffer.getChannelData(0).set(result);
+
+    const wav = audioBufferToWav(buffer);
+    const blob = new Blob([wav], { type: "audio/wav" });
+
+    const formData = new FormData();
+    formData.append("audio", blob, "audio.wav");
+
+    sttStatus.innerText = "Processing...";
+
+    try {
+        // STT
+        const res = await fetch("/stt", { method: "POST", body: formData });
+        const data = await res.json();
+
+        const transcript = data.text || "";
+        sttResult.value = transcript;
+
+        if (!transcript) {
+            sttStatus.innerText = "No speech detected";
+            return;
+        }
+
+        sttStatus.innerText = "Thinking...";
+
+        // RPC (returns text + audio)
+        const rpcRes = await fetch("/rpc", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: transcript })
+        });
+
+        const rpcData = await rpcRes.json();
+
+        aiResult.value = rpcData.text || "";
+
+        // 🔊 PLAY AUDIO
+        if (rpcData.audio) {
+
+            // stop previous audio
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            sttStatus.innerText = "🔊 Speaking...";
+
+            currentAudio = new Audio("data:audio/wav;base64," + rpcData.audio);
+
+            currentAudio.onended = () => {
+                sttStatus.innerText = "Ready";
+            };
+
+            currentAudio.play().catch(err => {
+                console.error("Audio play failed:", err);
+                sttStatus.innerText = "Ready";
+            });
+        } else {
+            sttStatus.innerText = "Ready";
+        }
+
+    } catch (err) {
+        console.error(err);
+        sttStatus.innerText = "Error";
+    }
+
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+};
+</script>
+
+</body>
+</html>

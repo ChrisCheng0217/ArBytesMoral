@@ -1,0 +1,3 @@
+grpcio
+paho-mqtt
+kuksa_client
