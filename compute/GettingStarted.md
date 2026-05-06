@@ -70,5 +70,5 @@ On the **CarMate machine**, open your web browser and access the interface:
 ---
 
 👉 **MCU Setup:** Follow the MCU setup guide here:  
-[MCU Setup Guide](./mcu_sw/GettingStarted.md)
+[MCU Setup Guide](../mcu_sw/GettingStarted.md)
 
