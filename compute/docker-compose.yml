@@ -12,8 +12,12 @@ services:
 
   mqtt:
     image: eclipse-mosquitto:2.0
+<<<<<<< Updated upstream
     container_name: mqtt
     network_mode: host
+=======
+    container_name: mqtt_COMPOSE
+>>>>>>> Stashed changes
     depends_on:
       - sdv_runtime
     volumes:
