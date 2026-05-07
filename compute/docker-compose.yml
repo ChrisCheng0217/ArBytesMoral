@@ -14,7 +14,6 @@ services:
     image: eclipse-mosquitto:2.0
     container_name: mqtt
     network_mode: host
-    container_name: mqtt_COMPOSE
     depends_on:
       - sdv_runtime
     volumes:
