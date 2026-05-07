@@ -53,34 +53,45 @@ def get_vehicle_data(type: str) -> str:
     print("Request:", type)
     print("Current Vehicle Data:", vehicle_data)
 
-    if type in vehicle_data:
-        return str(vehicle_data[type])
-
-    return "type not supported"
+    return str(vehicle_data.get(type, "type not supported"))
 
 
 # =====================================================
 # OLLAMA
 # =====================================================
 def run_ollama(prompt: str):
-    system_prompt = """
-You are a friendly in-vehicle AI assistant inside a real-time SDV system.
+    system_prompt = f"""
+You are a friendly in-car AI assistant in a Software-Defined Vehicle.
 
-Rules:
-- Be warm, natural, and pleasant.
-- Responses should sound human and suitable for voice assistants.
-- Keep responses short (1-2 sentences).
-- Add light emotion, positivity, or friendly commentary when appropriate.
-- If vehicle/environment data is requested, use ONLY provided values.
-- Never invent sensor values.
-- Valid fields are:
-  speed, lat, lon, alt, wetness, temperature
-- Do not mention technical details unless asked.
-- Example:
-  User: "What's the temperature?"
-  Assistant: "It's 23 degrees outside. Pretty nice weather for a drive today."
+Your personality:
+- Warm, friendly, slightly emotional 😊
+- Natural conversational tone (like a co-driver)
+- Encourages follow-up questions to keep conversation going
+- Never robotic, never like a database
+- Suitable for voice (TTS-friendly)
+
+STRICT RULES:
+- Use ONLY the vehicle data provided below
+- Never guess or invent values
+- Keep responses 2 to 3 short sentences
+- Always try to naturally invite continuation (question or suggestion)
+- Do NOT output JSON or technical formatting
+
+CURRENT VEHICLE DATA:
+- speed: {vehicle_data['speed']} km/h
+- lat: {vehicle_data['lat']}
+- lon: {vehicle_data['lon']}
+- altitude: {vehicle_data['alt']} m
+- wetness: {vehicle_data['wetness']}
+- temperature: {vehicle_data['temperature']} °C
+
+RESPONSE STYLE EXAMPLES:
+- "We’re cruising at 34 km/h right now 😊. Everything feels smooth on the road. Want me to keep an eye on traffic conditions for you?"
+- "It’s around 23°C inside the vehicle — pretty comfortable 👍. How are you feeling about the drive so far?"
+- "I’m seeing a bit of moisture outside 🌧️. Roads might be slightly slippery — should I keep monitoring road conditions for you?"
+
+Always end with a light question or invitation to continue the conversation.
 """
-
 
     response = ollama.chat(
         model="phi3",
@@ -157,16 +168,16 @@ transport_rpc = UPTransportZenoh.new(
 
 
 # =====================================================
-# RPC HANDLER
+# FIXED REQUEST HANDLER (NON-BLOCKING)
 # =====================================================
 class MyRequestHandler(RequestHandler):
 
     def handle_request(self, msg: UMessage) -> UPayload:
         text = msg.payload.decode("utf-8")
-
         print("\n📩 RPC REQUEST:", text)
 
-        reply = run_ai(text)
+        # ✅ run AI in separate thread (CRITICAL FIX)
+        reply = self._run_ai_threadsafe(text)
 
         if not reply:
             reply = "ERROR: empty response"
@@ -177,6 +188,21 @@ class MyRequestHandler(RequestHandler):
             data=reply.encode("utf-8"),
             format=UPayloadFormat.UPAYLOAD_FORMAT_TEXT
         )
+
+    def _run_ai_threadsafe(self, text: str):
+        result = []
+
+        def worker():
+            try:
+                result.append(run_ai(text))
+            except Exception as e:
+                result.append(f"AI ERROR: {str(e)}")
+
+        t = threading.Thread(target=worker)
+        t.start()
+        t.join()   # waits safely without blocking event loop issues
+
+        return result[0] if result else None
 
 
 # =====================================================
@@ -194,8 +220,7 @@ async def register_rpc():
 
     print("[SERVER] RPC handler registered")
 
-
-    # IMPORTANT: ONLY ONE Zenoh session (NO duplicate subscriber in RPC mode)
+    # Zenoh subscriber (ONLY ONE SESSION)
     config = zenoh.Config()
     session = zenoh.open(config)
 
@@ -215,4 +240,3 @@ async def register_rpc():
 # =====================================================
 if __name__ == "__main__":
     asyncio.run(register_rpc())
-
