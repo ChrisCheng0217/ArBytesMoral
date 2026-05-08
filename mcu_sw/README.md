@@ -1,9 +1,6 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 # ThreadX MQTT IoT Sensor Node
 
-👉 **Getting Started:** If you want to begin MCU setup and deployment, follow this guide:  
-[MCU Setup Guide](./GettingStarted.md)
-
 ## Overview
 
 This embedded Rust application runs on the MxChip IoT DevKit, implementing a real-time IoT sensor node using Azure RTOS ThreadX. The system automatically measures environmental data and communicates via MQTT over WiFi. Simultaneously it receives a RGB value via MQTT and sets the integrated LED.

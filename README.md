@@ -5,7 +5,7 @@
 
 👉 **Getting Started:** If you want to begin setup and deployment,
 follow this guide first:\
-📘 [CarMate Getting Started Guide](./compute/README.md)
+📘 [CarMate Getting Started Guide](/Manual.md)
 
 ------------------------------------------------------------------------
 
