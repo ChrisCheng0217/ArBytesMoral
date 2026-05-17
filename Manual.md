@@ -178,3 +178,31 @@ cargo run --release \
   --target thumbv7em-none-eabihf \
   --bin network
 ```
+
+## Guide to change the LLM Model
+
+If you want to use a different AI model (e.g., swapping `phi3` for `mistral`), follow these steps on your Linux machine:
+
+### 1. Download the New Model
+Pull your desired model using Ollama. For example, to use Mistral:
+```bash
+ollama pull mistral
+```
+
+### 2. Update CarMate Configuration
+Open the agent configuration file:
+```bash
+compute/carmate_agents/carmate_agents.py
+```
+Navigate to Line 97 and update the model string to match your newly pulled model:
+```bash
+model = "mistral"
+```
+
+### 3. Restart the Stack
+Apply the changes by restarting your Docker containers:
+```bash
+cd ~/compute
+sudo docker compose down
+sudo docker compose up -d
+```
