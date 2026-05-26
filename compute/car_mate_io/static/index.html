@@ -119,7 +119,7 @@ let input;
 let processor;
 let audioChunks = [];
 
-let currentAudio = null; // 🔊 track current playing audio
+let currentAudio = null;
 
 const btnStart = document.getElementById("btnStart");
 const btnStop = document.getElementById("btnStop");
@@ -183,11 +183,18 @@ btnStop.onclick = async () => {
     sttStatus.innerText = "Processing...";
 
     try {
-        // STT
-        const res = await fetch("/stt", { method: "POST", body: formData });
-        const data = await res.json();
 
+        // -----------------------
+        // STT
+        // -----------------------
+        const res = await fetch("/stt", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
         const transcript = data.text || "";
+
         sttResult.value = transcript;
 
         if (!transcript) {
@@ -197,7 +204,9 @@ btnStop.onclick = async () => {
 
         sttStatus.innerText = "Thinking...";
 
-        // RPC (returns text + audio)
+        // -----------------------
+        // RPC (TEXT ONLY)
+        // -----------------------
         const rpcRes = await fetch("/rpc", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -205,33 +214,33 @@ btnStop.onclick = async () => {
         });
 
         const rpcData = await rpcRes.json();
-
         aiResult.value = rpcData.text || "";
 
-        // 🔊 PLAY AUDIO
-        if (rpcData.audio) {
+        // -----------------------
+        // TTS (FIXED PART)
+        // -----------------------
+        sttStatus.innerText = "🔊 Speaking...";
 
-            // stop previous audio
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
-            }
+        const ttsRes = await fetch("/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: rpcData.text })
+        });
 
-            sttStatus.innerText = "🔊 Speaking...";
+        const audioBlob = await ttsRes.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
 
-            currentAudio = new Audio("data:audio/wav;base64," + rpcData.audio);
-
-            currentAudio.onended = () => {
-                sttStatus.innerText = "Ready";
-            };
-
-            currentAudio.play().catch(err => {
-                console.error("Audio play failed:", err);
-                sttStatus.innerText = "Ready";
-            });
-        } else {
-            sttStatus.innerText = "Ready";
+        if (currentAudio) {
+            currentAudio.pause();
         }
+
+        currentAudio = new Audio(audioUrl);
+
+        currentAudio.onended = () => {
+            sttStatus.innerText = "Ready";
+        };
+
+        currentAudio.play();
 
     } catch (err) {
         console.error(err);
