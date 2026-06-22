@@ -15,12 +15,13 @@ The MCU, if used, communicates over Wi-Fi.
 
 # Step 1 — Start Ollama
 
-CarMate requires Ollama for AI responses.
+CarMate requires Ollama for AI responses. If you want to use a different LLM model instead of `phi3`, see [Guide to change the LLM Model](#guide-to-change-the-llm-model).
 
 On the Linux machine, run:
 
 ```bash
 ollama serve
+ollama pull phi3
 ```
 
 ---
