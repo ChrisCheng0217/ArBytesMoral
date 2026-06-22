@@ -14,8 +14,8 @@ WORKDIR /app/up-transport-zenoh-python
 # Install repo dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install extra dependency
-RUN pip install paho-mqtt ollama
+# Install extra dependencies (Added openai, google-genai, and groq)
+RUN pip install paho-mqtt ollama openai google-genai groq
 
 # Copy your script into container
 COPY . /app/up-transport-zenoh-python/

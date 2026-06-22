@@ -181,28 +181,69 @@ cargo run --release \
 
 ## Guide to change the LLM Model
 
-If you want to use a different AI model (e.g., swapping `phi3` for `mistral`), follow these steps on your Linux machine:
+The carmate_agents script supports multiple local and cloud-based AI providers. You can change your active AI backend or switch model variants directly inside the configuration section of the script.
 
-### 1. Download the New Model
-Pull your desired model using Ollama. For example, to use Mistral:
+### 1. Download the New Model. Setup/Pull the Model
+
+For Local Ollama Backend: Pull your desired model variant to your local machine:
+Bash
+
 ```bash
-ollama pull mistral
+ollama pull phi3
+# or alternative models like: ollama pull mistral
 ```
+
+For Cloud Backends (OpenAI, Gemini, Grok, Groq):
+Ensure you have a valid API Key from the respective provider platform before moving to the next step.
 
 ### 2. Update CarMate Configuration
-Open the agent configuration file:
+
+Open the agent configuration file using your preferred text editor:
+Bash
+
 ```bash
-compute/carmate_agents/carmate_agents.py
-```
-Navigate to Line 97 and update the model string to match your newly pulled model:
-```bash
-model = "mistral"
+nano compute/carmate_agents/carmate_agents.py
 ```
 
-### 3. Restart the Stack
-Apply the changes by restarting your Docker containers:
+Locate the HARDCODED AI CONFIGURATION section at the top of the file:
+
+1. Change the Provider: Update AI_PROVIDER to your choice: "ollama", "openai", "gemini", "grok", or "groq".
+
+2. Provide your API Key: If using a cloud model, paste your token inside the API_KEYS dictionary matching your chosen provider.
+
+3. (Optional) Tweak Specific Model Variants: If you want to use a specific model tag (e.g., swapping gpt-4o-mini for gpt-4o), modify the string value inside MODEL_MAP.
+
+```bash
+
+# =====================================================
+# HARDCODED AI CONFIGURATION (Change here)
+# =====================================================
+# Options: "ollama", "openai", "gemini", "grok", "groq"
+AI_PROVIDER = "openai"
+
+# Insert your API keys here directly if using cloud models
+API_KEYS = {
+    "openai": "sk-proj-YOUR_ACTUAL_OPENAI_KEY_HERE",
+    "gemini": "YOUR_GEMINI_API_KEY",
+    "grok": "YOUR_XAI_API_KEY",
+    "groq": "YOUR_GROQ_API_KEY",
+}
+
+MODEL_MAP = {
+    "ollama": "phi3",
+    "openai": "gpt-4o-mini",
+    "gemini": "gemini-1.5-flash",
+    "grok": "grok-beta",
+    "groq": "llama-3.3-70b-versatile",
+}
+```
+
+### 3. Rebuild and Restart the Stack
+
+Because the updated code configuration file gets built directly into the Docker image filesystem context, you must build when bringing up the compose environment to apply the code changes:
+
 ```bash
 cd ~/compute
 sudo docker compose down
-sudo docker compose up -d
+sudo docker compose up -d --build
 ```

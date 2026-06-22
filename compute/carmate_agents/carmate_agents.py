@@ -1,11 +1,16 @@
 import asyncio
-import zenoh
+import os
 import threading
 import time
+import google.genai as genai
+from groq import Groq
 import ollama
+from openai import OpenAI
+import zenoh
 
 import common_uuri
 
+from up_transport_zenoh.uptransportzenoh import UPTransportZenoh
 from uprotocol.communication.inmemoryrpcserver import InMemoryRpcServer
 from uprotocol.communication.requesthandler import RequestHandler
 from uprotocol.communication.upayload import UPayload
@@ -13,7 +18,27 @@ from uprotocol.v1.uattributes_pb2 import UPayloadFormat
 from uprotocol.v1.umessage_pb2 import UMessage
 from uprotocol.v1.uri_pb2 import UUri
 
-from up_transport_zenoh.uptransportzenoh import UPTransportZenoh
+# =====================================================
+# HARDCODED AI CONFIGURATION (Change here)
+# =====================================================
+# Options: "ollama", "openai", "gemini", "grok", "groq"
+AI_PROVIDER = "ollama"
+
+# Insert your API keys here directly if using cloud models
+API_KEYS = {
+    "openai": "YOUR_OPENAI_API_KEY",
+    "gemini": "YOUR_GEMINI_API_KEY",
+    "grok": "YOUR_XAI_API_KEY",
+    "groq": "YOUR_GROQ_API_KEY",
+}
+
+MODEL_MAP = {
+    "ollama": "phi3",
+    "openai": "gpt-4o-mini",
+    "gemini": "gemini-1.5-flash",
+    "grok": "grok-beta",
+    "groq": "llama-3.3-70b-versatile",
+}
 
 
 # =====================================================
@@ -25,7 +50,7 @@ RESOURCE_MAP = {
     1003: "lon",
     1004: "alt",
     1005: "wetness",
-    2001: "temperature"
+    2001: "temperature",
 }
 
 vehicle_data = {
@@ -34,7 +59,7 @@ vehicle_data = {
     "lon": "555",
     "alt": "455",
     "wetness": "45",
-    "temperature": "23"
+    "temperature": "23",
 }
 
 
@@ -57,9 +82,9 @@ def get_vehicle_data(type: str) -> str:
 
 
 # =====================================================
-# OLLAMA
+# UNIVERSAL LLM CLIENT ROUTER
 # =====================================================
-def run_ollama(prompt: str):
+def run_llm_call(provider: str, prompt: str) -> str:
     system_prompt = f"""
 You are a friendly in-car AI assistant in a Software-Defined Vehicle.
 
@@ -93,24 +118,80 @@ RESPONSE STYLE EXAMPLES:
 Always end with a light question or invitation to continue the conversation.
 """
 
-    response = ollama.chat(
-        model="phi3",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ]
-    )
+    model = MODEL_MAP.get(provider)
 
-    return response["message"]["content"]
+    if provider == "ollama":
+        response = ollama.chat(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response["message"]["content"]
+
+    elif provider == "openai":
+        client = OpenAI(api_key=API_KEYS["openai"])
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response.choices[0].message.content
+
+    elif provider == "gemini":
+        client = genai.Client(api_key=API_KEYS["gemini"])
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                system_instruction=system_prompt
+            ),
+        )
+        return response.text
+
+    elif provider == "grok":
+        client = OpenAI(
+            api_key=API_KEYS["grok"],
+            base_url="https://api.x.ai/v1",
+        )
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response.choices[0].message.content
+
+    elif provider == "groq":
+        client = Groq(api_key=API_KEYS["groq"])
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return response.choices[0].message.content
+
+    else:
+        raise ValueError(f"Unsupported provider: {provider}")
 
 
 # =====================================================
 # AI ORCHESTRATOR
 # =====================================================
 def run_ai(prompt: str):
-    print("\n🚀 AI REQUEST:", prompt)
+    print(f"\n🚀 AI REQUEST ({AI_PROVIDER.upper()}):", prompt)
 
-    response = run_ollama(prompt)
+    try:
+        response = run_llm_call(AI_PROVIDER, prompt)
+    except Exception as e:
+        print(f"❌ LLM Backend Error: {e}")
+        return f"Sorry, I encountered an error checking my engine parameters: {str(e)}"
 
     print("\n🤖 RAW MODEL RESPONSE:")
     print(response)
@@ -162,8 +243,7 @@ print(f"[SERVER] Listening on: {METHOD_URI}")
 source_rpc = UUri(authority_name="voice-command", ue_id=18)
 
 transport_rpc = UPTransportZenoh.new(
-    common_uuri.get_zenoh_config(),
-    source_rpc
+    common_uuri.get_zenoh_config(), source_rpc
 )
 
 
@@ -186,7 +266,7 @@ class MyRequestHandler(RequestHandler):
 
         return UPayload(
             data=reply.encode("utf-8"),
-            format=UPayloadFormat.UPAYLOAD_FORMAT_TEXT
+            format=UPayloadFormat.UPAYLOAD_FORMAT_TEXT,
         )
 
     def _run_ai_threadsafe(self, text: str):
@@ -200,7 +280,7 @@ class MyRequestHandler(RequestHandler):
 
         t = threading.Thread(target=worker)
         t.start()
-        t.join()   # waits safely without blocking event loop issues
+        t.join()  # waits safely without blocking event loop issues
 
         return result[0] if result else None
 
@@ -213,10 +293,7 @@ async def register_rpc():
 
     rpc_server = InMemoryRpcServer(transport_rpc)
 
-    await rpc_server.register_request_handler(
-        METHOD_URI,
-        MyRequestHandler()
-    )
+    await rpc_server.register_request_handler(METHOD_URI, MyRequestHandler())
 
     print("[SERVER] RPC handler registered")
 
@@ -224,10 +301,7 @@ async def register_rpc():
     config = zenoh.Config()
     session = zenoh.open(config)
 
-    session.declare_subscriber(
-        "up/publisher/**",
-        callback
-    )
+    session.declare_subscriber("up/publisher/**", callback)
 
     print("[SERVER] Listening...\n")
 
