@@ -35,15 +35,15 @@ services:
     depends_on:
       - mqtt
     restart: unless-stopped
-
+    
   carla_provider:
-    image: ghcr.io/raihhann/carla_mqtt_provider:latest
-    container_name: carla_provider
+    build:
+      context: ./carla_provider
+    container_name: carla-provider
     network_mode: host
     depends_on:
       - mqtt
-    command: python /home/carla_provider.py
-    restart: unless-stopped
+    restart: unless-stopped  
     
   vehicle_data_accessor:
     build:
