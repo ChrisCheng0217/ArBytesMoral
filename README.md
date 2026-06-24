@@ -37,25 +37,30 @@ Example use cases include:
 - Supporting bidirectional interaction between driver, AI, vehicle systems, and vehicle data feedback
 - Visualizing key vehicle data and AI-generated insights in the cluster display and Web UI
 
-## Interaction Flow
+## Technical Architecture
 
-CarMate supports bidirectional interaction across the vehicle, driver, and AI components:
+![CarMate technical architecture](img/tech_arch.png)
 
-- Driver -> AI -> Vehicle systems
-- Vehicle data -> AI -> Driver feedback
+The CarMate blueprint is organized across three connected nodes:
 
-## Projects and Technologies
+- MCU Node: runs the ThreadX-based sensor and LED drivers and publishes sensor data through MQTT.
+- Compute Node: hosts the containerized SDV services, including the MQTT broker, MQTT-Kuksa provider, CARLA-Kuksa provider, Kuksa Databroker, Vehicle Data Accessor, TTS/STT, CarMate agent, and local or external LLM backend.
+- HPC Node: runs the CARLA server and instrument app, connected through uProtocol and Zenoh.
+
+Vehicle and simulation data flow from the MCU node and CARLA environment into the Kuksa Databroker as VSS-aligned signals. CarMate reads this vehicle context through the Vehicle Data Accessor, combines it with speech and LLM interaction, and returns feedback to the driver-facing UI, instrument app, or selected vehicle functions.
+
+## Used Technologies and Tools
 
 This blueprint builds upon the following open-source projects and technologies:
 
-- Eclipse Kuksa
-- Eclipse Mosquitto
-- Eclipse Zenoh
-- CARLA Simulator
-- COVESA VSS
-- Eclipse AutoWRX
-- Docker
-- Local or external LLM providers
+- Eclipse Kuksa: https://eclipse-kuksa.github.io/kuksa-website/
+- Eclipse Mosquitto: https://mosquitto.org/
+- Eclipse Zenoh: https://zenoh.io/
+- CARLA Simulator: https://carla.org/
+- COVESA VSS: https://covesa.github.io/vehicle_signal_specification/
+- Eclipse AutoWRX: https://github.com/eclipse-autowrx
+- Docker: https://www.docker.com/
+- Ollama: https://ollama.com/
 
 ## Future Work
 
@@ -87,6 +92,11 @@ Licensed under the Apache License 2.0.
 
 SPDX-License-Identifier: Apache-2.0
 
+## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) and ensure compliance with the
+[Eclipse Contributor Agreement (ECA)](https://www.eclipse.org/legal/ECA.php).
+
 ## Copyright
 
-Copyright (c) 2025 CarByte and contributors.
+Copyright (c) 2025 Eclipse Foundation and contributors.
