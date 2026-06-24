@@ -1,157 +1,92 @@
-```{=html}
-<!-- SPDX-License-Identifier: Apache-2.0 -->
-```
-# 🚛💬 SDV Blueprint - CarMate
+﻿# SDV Blueprint - CarMate
 
-👉 **Getting Started:** If you want to begin setup and deployment,
-follow this guide first:\
-📘 [CarMate Getting Started Guide](/Manual.md)
+CarMate is an AI-powered in-vehicle companion blueprint for Software Defined Vehicle (SDV) architectures. It enhances driver well-being, safety, and interaction by combining real-time vehicle data, conversational AI, and safe human-machine interfaces.
 
-------------------------------------------------------------------------
+## Getting Started
 
-## 📌 Project Overview
+For setup and deployment instructions, start with the [CarMate Getting Started Guide](Manual.md).
 
-### 🏷️ Project Name / Tagline
+## Goal
 
-CarMate - An in-vehicle AI assistant for lonely truck drivers.
+This blueprint demonstrates an end-to-end SDV architecture for an AI-powered in-vehicle companion named CarMate.
 
-------------------------------------------------------------------------
+CarMate integrates real-time vehicle data, AI-driven conversational interaction, and safe human-machine interfaces into a reproducible SDV reference architecture.
 
-### 🧭 Initial Project Background
+The blueprint connects:
 
-This project is based on an existing SDV (Software-Defined Vehicle)
-concept originally developed by **CarByte**.
+- In-vehicle data sources, including MCU sensors, simulation data from CARLA, and vehicle signals
+- Vehicle middleware and orchestration components, including VSS-based data models, MQTT providers, Eclipse Kuksa Databroker, and digital.auto
+- AI interaction components, including speech processing, conversational AI, and LLM integration
+- User interface and visualization components, including cluster display and Web UI
 
-The current implementation extends this foundation as part of the SDV
-Lab Challenge, focusing on improving integration with modern automotive
-simulation tools and reducing external cloud dependencies.
+The goal is to provide a reusable and extensible SDV blueprint based on open-source components, aligned with COVESA Vehicle Signal Specification (VSS) semantics, and suitable for future integration with broader SDV capabilities such as service mesh, orchestration, authentication, and authorization.
 
-------------------------------------------------------------------------
+## Use Case
 
-## ⚙️ Key Modifications in This Version
+This blueprint focuses on a driver companion scenario for long-distance drivers, such as truck drivers and commuters.
 
-This version introduces the following major architectural changes:
+The AI companion combines emotional engagement, contextual awareness, and intelligent vehicle interaction.
 
--   🔗 **Integration with digital.auto Playground (Eclipse AutoWrx
-    ecosystem)**\
-    The system now connects to the digital.auto Playground, enabling
-    simulation-based SDV development and testing.
+Example use cases include:
 
--   🤖 **Local LLM instead of OpenAI API**\
-    The conversational AI system was migrated from a cloud-based OpenAI
-    model to a locally hosted LLM.\
-    This improves:
+- Capturing driver voice input and converting it into structured commands via speech-to-text
+- Mapping vehicle and environmental data, such as temperature, weather, and simulation data, into VSS signals
+- Enabling conversational AI to respond socially and reduce driver loneliness
+- Providing contextual driving insights, such as weather and road condition information
+- Controlling selected vehicle features, such as ambient lighting
+- Supporting bidirectional interaction between driver, AI, vehicle systems, and vehicle data feedback
+- Visualizing key vehicle data and AI-generated insights in the cluster display and Web UI
 
-    -   🔒 Data privacy (no external API calls)\
-    -   📡 Offline capability\
-    -   💸 Lower dependency on external services\
-    -   🧠 Better control over model behavior in embedded environments
+## Interaction Flow
 
--   🧩 **CarMate AI concept retained**\
-    The in-vehicle AI assistant (CarMate) remains the core application
-    layer of the system.
+CarMate supports bidirectional interaction across the vehicle, driver, and AI components:
 
-------------------------------------------------------------------------
+- Driver -> AI -> Vehicle systems
+- Vehicle data -> AI -> Driver feedback
 
-## 💡 Core Idea
+## Projects and Technologies
 
-### 🚛 Problem Statement:
+This blueprint builds upon the following open-source projects and technologies:
 
-Truck drivers often experience isolation during long drives while also
-facing safety risks from manual infotainment interaction.
+- Eclipse Kuksa
+- Eclipse Mosquitto
+- Eclipse Zenoh
+- CARLA Simulator
+- COVESA VSS
+- Eclipse AutoWRX
+- Docker
+- Local or external LLM providers
 
-------------------------------------------------------------------------
+## Future Work
 
-### 🤖 Solution Concept: CarMate
+### 1. Emotion and Driver State Awareness
 
-CarMate is a local AI-powered in-vehicle assistant designed to improve
-driving comfort, safety, and interaction.
+Enhance CarMate with driver monitoring capabilities, such as voice tone analysis and camera-based detection, to infer fatigue, stress, or mood. This would allow the AI to adapt conversations, suggest breaks, or reduce interaction intensity for safer driving.
 
-------------------------------------------------------------------------
+### 2. AI Optimization
 
-#### 🧠 1. Local AI Conversational Companion
+Move from reactive responses to proactive intelligence. CarMate could anticipate driver needs based on context, route, time, and habits, such as suggesting rest stops, warning about upcoming hazards, or preparing vehicle settings in advance.
 
--   Runs on a **locally deployed LLM** instead of cloud APIs\
--   Provides natural, context-aware dialogue\
--   Operates without requiring internet connectivity\
--   Ensures improved privacy and system autonomy
+### 3. Integration with Advanced Vehicle Systems
 
-------------------------------------------------------------------------
+Expand beyond basic signals to integrate with ADAS and infotainment systems, such as navigation and driver assistance alerts. CarMate could proactively explain warnings, assist in decision-making, or provide contextual driving guidance.
 
-#### 🚗 2. Vehicle & Simulation Integration
+### 4. Multi-User and Personalization Profiles
 
--   Interfaces with vehicle data and simulation environments\
--   Integrated with **digital.auto Playground (AutoWrx)**\
--   Supports real-time interaction with simulated vehicle signals
+Introduce driver profiles with memory and preferences, such as language, tone, and favorite settings. CarMate could recognize different drivers and adapt behavior, making the experience more personalized and consistent across trips.
 
-------------------------------------------------------------------------
+## Acknowledgement
 
-#### 🗣️ 3. Hands-Free Interaction
+This blueprint is built upon and further developed from the [ArBytesMoral](https://github.com/Eclipse-SDV-Hackathon-Chapter-Three/ArBytesMoral) project, which was created during the Eclipse SDV Hackathon Chapter Three.
 
--   Fully voice-controlled interface\
--   Supports natural language commands such as:
-    -   "Change the ambient color"\
-    -   "What is my current speed?"
+We sincerely thank all contributors and team members of ArBytesMoral for their foundational work that made this blueprint possible.
 
-------------------------------------------------------------------------
+## License
 
-## 🌟 Benefits of This Implementation
+Licensed under the Apache License 2.0.
 
--   🔒 Increased privacy through local LLM execution\
--   🌐 Reduced dependency on external AI services\
--   🧪 Strong SDV simulation integration via digital.auto Playground\
--   🧩 Simplified and more maintainable system architecture\
--   🚦 Safe, hands-free in-vehicle interaction model
-
-------------------------------------------------------------------------
-
-## 🏗️ Technical View
-
-### 🚘 1. Vehicle Data Layer
-
--   Handles vehicle and simulation signals\
--   Integrated via digital.auto Playground
-
-------------------------------------------------------------------------
-
-### 🧠 2. AI Layer (Local LLM)
-
--   Processes natural language input locally\
--   Generates responses without cloud dependency\
--   Acts as the core intelligence unit of CarMate
-
-------------------------------------------------------------------------
-
-### 🔗 3. Simulation Integration Layer
-
--   Bridges system with SDV simulation environment\
--   Enables testing and validation in digital.auto ecosystem
-
-------------------------------------------------------------------------
-
-### 🎤 4. User Interaction Layer
-
--   Voice-based interface for driver interaction\
--   Ensures safe, hands-free usage
-
-------------------------------------------------------------------------
-
-## 🎯 System Goals
-
--   🔒 Fully local AI processing (no cloud dependency)\
--   🚗 SDV-ready simulation integration\
--   🧩 Modular and extensible architecture\
--   🚦 Safe and intuitive driver interaction
-
-------------------------------------------------------------------------
-
-## 📜 License
-
-Licensed under the Apache License 2.0.\
 SPDX-License-Identifier: Apache-2.0
 
-------------------------------------------------------------------------
-
-## ©️ Copyright
+## Copyright
 
 Copyright (c) 2025 CarByte and contributors.
