@@ -97,6 +97,10 @@ SPDX-License-Identifier: Apache-2.0
 Please see [CONTRIBUTING.md](CONTRIBUTING.md) and ensure compliance with the
 [Eclipse Contributor Agreement (ECA)](https://www.eclipse.org/legal/ECA.php).
 
+## Notice
+
+See [NOTICE](NOTICE).
+
 ## Copyright
 
 Copyright (c) 2025 Eclipse Foundation and contributors.
