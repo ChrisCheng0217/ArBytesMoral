@@ -143,9 +143,11 @@ ping 192.168.43.241
 
 ## Step 3: Start CARLA
 
-On the Windows machine, download CARLA 0.9.14:
+### If you dont want to use the carla then skip this part
 
-https://tiny.carla.org/carla-0-9-14-windows
+On the Windows machine, download CARLA 0.9.16:
+
+https://github.com/carla-simulator/carla
 
 Extract the folder and Launch the simulator:
 
@@ -159,7 +161,16 @@ Wait until the simulation finishes loading.
 
 ## Step 4: Start the CarMate Stack
 
-On the Linux machine:
+By default, the container is configured to spin up the **Mock Server** automatically. If you want to use the **Real CARLA Server** as your permanent default, On you linux machine you need to modify the Dockerfile directly before building the image.
+
+Open `/compute/carla_provider/Dockerfile` and locate the final line:
+
+```dockerfile
+# Default: Runs in MOCK mode
+CMD ["python", "carla_mqtt_bridge.py", "--nocarla"]
+```
+
+and then run this command, If you want to use the real carla server then skip the above part and directly run this command :
 
 ```bash
 cd ~/compute
