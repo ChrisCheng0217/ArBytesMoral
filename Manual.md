@@ -80,6 +80,7 @@ MODEL_MAP = {
 The Docker image includes this configuration file, so Step 4 uses `--build` to apply any backend or model changes.
 
 ---
+### If you dont want to use the real carla server then go directly to step 4
 
 ## Step 2: Configure Ethernet Connection
 
@@ -106,6 +107,7 @@ To configure this:
 7. Enter the IP configuration above
 
 ### Linux Machine (CarMate UI)
+
 
 First identify the Ethernet interface:
 
@@ -170,7 +172,7 @@ Open `/compute/carla_provider/Dockerfile` and locate the final line:
 CMD ["python", "carla_mqtt_bridge.py", "--nocarla"]
 ```
 
-and then run this command, If you want to use the real carla server then skip the above part and directly run this command :
+and then run the following command, If you dont want to use the real carla server then skip the above part and run the folllowing command:
 
 ```bash
 cd ~/compute
@@ -187,11 +189,21 @@ Open a browser on the Linux machine and go to:
 http://localhost:5000
 ```
 
+### Available Telemetry Signals
+
+The current streaming architecture exposes the following dynamic signals to the AI processing layer:
+* **Vehicle Speed** (km/h)
+* **Altitude** (m)
+* **Latitude / Longitude** (GNSS Coordinates)
+* **Humidity / Road Wetness** (%)
+
+To expand the dataset with environmental metrics, proceed to **Step 6** to integrate external hardware for real-time temperature sensing.
+
 ---
 
 ## (Optional) Step 6: Azure IoT Dev Kit (MCU Node) Setup
 
-This section is only required if you want hardware integration with CarMate.
+This section is only required if you want hardware integration with CarMate. 
 
 Make sure:
 
